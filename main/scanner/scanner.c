@@ -57,6 +57,11 @@ void scanner_print_dev_list()
                  bt_dev_list[i].mac[4], bt_dev_list[i].mac[5]);
         ESP_LOGI(SCANNER_TAG, "  RSSI: %d", bt_dev_list[i].rssi);
 
+        if (bt_dev_list[i].paired)
+        {
+            ESP_LOGI(SCANNER_TAG, "  PAIRED");
+        }
+
         printed_devs++;
 
         if (printed_devs >= bt_dev_total)
@@ -119,6 +124,9 @@ bool scanner_remove_inactive_devs()
         if (bt_dev_list[i].taked_slot == false)
             continue;
 
+        if (bt_dev_list[i].paired == true)
+            continue;
+
         if (bt_dev_list[i].bt_active == false)
         {
             // erase inactive devices
@@ -154,8 +162,53 @@ bool scanner_add_new_device_rssi(int index, void *val)
     return true;
 }
 
-
 uint8_t *scanner_get_mac_from_index(int index)
 {
     return bt_dev_list[index].mac;
+}
+
+void scanner_set_device_as_paired(uint8_t *mac)
+{
+    int checked_bt_devs = 0;
+    for (int i = 0; i < MAX_BT_DEVS; i++)
+    {
+        if (bt_dev_list[i].taked_slot == false)
+            continue;
+
+        if (maccomp(mac, bt_dev_list[i].mac) == true)
+        {
+            bt_dev_list[i].paired = true;
+            break;
+        }
+
+        // take care only for added devs
+        checked_bt_devs++;
+        if (checked_bt_devs >= bt_dev_total)
+        {
+            break;
+        }
+    }
+}
+
+void scanner_set_device_as_unpaired(uint8_t *mac)
+{
+    int checked_bt_devs = 0;
+    for (int i = 0; i < MAX_BT_DEVS; i++)
+    {
+        if (bt_dev_list[i].taked_slot == false)
+            continue;
+
+        if (maccomp(mac, bt_dev_list[i].mac) == true)
+        {
+            bt_dev_list[i].paired = false;
+            break;
+        }
+
+        // take care only for added devs
+        checked_bt_devs++;
+        if (checked_bt_devs >= bt_dev_total)
+        {
+            break;
+        }
+    }
 }

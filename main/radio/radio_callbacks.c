@@ -26,11 +26,10 @@ on_scan_dev_service_t on_scan_dev_service_cb = NULL;
 on_cl_init_t on_cl_init_cb = NULL;
 on_open_t on_open_cb = NULL;
 on_pin_req_t on_pin_req_cb = NULL;
+on_close_t on_close_cb = NULL;
 
-uint8_t *dev_mac = NULL;
 uint8_t serv_channel = 0;
-uint32_t conn_handle = 0;
-bool is_connected = false;
+
 
 void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 {
@@ -58,19 +57,22 @@ void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
         ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_SPP_OPEN_EVT");
 
         if (param->open.status == ESP_SPP_SUCCESS)
-        {            
-            is_connected = true;
-            conn_handle = param->open.handle;
-            on_open_cb(true);
+        {
+            on_open_cb(true, param->open.rem_bda);
         }
         else
         {
-            on_open_cb(false);
+            on_open_cb(false, NULL);
         }
 
         break;
     case ESP_SPP_CLOSE_EVT:
         ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_SPP_CLOSE_EVT");
+        if (param->close.status == ESP_SPP_SUCCESS)
+        {
+            on_close_cb();          
+            serv_channel = 0;
+        }
         break;
     case ESP_SPP_START_EVT:
         ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_SPP_START_EVT");
@@ -79,12 +81,12 @@ void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
         ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_SPP_CL_INIT_EVT");
 
         if (param->cl_init.status == ESP_SPP_SUCCESS)
-        {            
-            on_cl_init_cb(true);
+        {
+            on_cl_init_cb(true,param->cl_init.handle);
         }
         else
         {
-            on_cl_init_cb(false);
+            on_cl_init_cb(false,0);
         }
 
         break;

@@ -10,6 +10,8 @@
 #include "string.h"
 #include "radio.h"
 
+extern bool need_new_conn;
+
 void signal_start_discovery(conc_msg_t *msg)
 {
     // update screen
@@ -98,6 +100,31 @@ void signal_send_pin(conc_msg_t *msg)
     radio_send_pin(pin_code, 5);
 }
 
+void signal_set_paired(conc_msg_t *msg)
+{
+    uint8_t *dev_addr = (uint8_t *)msg->data;
+    scanner_set_device_as_paired(dev_addr);
+    radio_set_as_paired();
+
+    free(dev_addr);
+}
+
+void signal_set_unpaired(conc_msg_t *msg)
+{
+    uint8_t *dev_addr = radio_get_dev_mac();
+    scanner_set_device_as_unpaired(dev_addr);
+    radio_set_as_unpaired();
+
+    uint8_t null_addr[6] = {0};
+    radio_set_dev_mac(null_addr);
+}
+
+void signal_set_handle(conc_msg_t *msg)
+{
+    uint32_t handle = (uint32_t)msg->data;
+    radio_set_handle(handle);
+}
+
 void signal_scroll_up(conc_msg_t *msg)
 {
     screen_sync_with_scroll_up();
@@ -105,15 +132,37 @@ void signal_scroll_up(conc_msg_t *msg)
 
     scanner_print_dev_list();
 }
-void signal_scan_dev_service(conc_msg_t *msg)
+
+void signal_set_dev_target(conc_msg_t *msg)
 {
     int index = screen_get_selected_index();
-    uint8_t *mac = scanner_get_mac_from_index(index);
+    uint8_t *sel_dev_addr = scanner_get_mac_from_index(index);
 
-    radio_scan_dev_service(mac);
-
-    printf("Button enter pressed\n");
+    if (radio_is_paired())
+    {
+        uint8_t *paired_dev_addr = radio_get_dev_mac();
+        if (maccomp(sel_dev_addr, paired_dev_addr) == true)
+        {
+            // to disconnect
+            radio_start_disconnection();
+        }
+        else
+        {
+            // to connect
+            need_new_conn = true;
+            // to disconnect
+            radio_start_disconnection();
+        }
+    }
+    else
+    {
+        printf("Button enter pressed: master was unpaired\n");
+        // to connect
+        radio_set_dev_mac(sel_dev_addr);
+        radio_scan_dev_service();
+    }
 }
+
 void signal_scroll_down(conc_msg_t *msg)
 {
     screen_sync_with_scroll_down();

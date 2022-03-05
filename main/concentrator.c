@@ -35,7 +35,8 @@ void app_main(void)
                on_scan_dev_service,
                on_cl_init,
                on_open,
-               on_pin_req);
+               on_pin_req,
+               on_close);
 
     while (1)
     {
@@ -65,11 +66,20 @@ void app_main(void)
         case CONC_SIG_SEND_PIN:
             signal_send_pin(&msg);
             break;
+        case CONC_SIG_SET_PAIRED:
+            signal_set_paired(&msg);
+            break;
+        case CONC_SIG_SET_UNPAIRED:
+            signal_set_unpaired(&msg);
+            break;
+        case CONC_SIG_SET_HANDLE:
+            signal_set_handle(&msg);
+            break;
         case CONC_SIG_SCROLL_UP:
             signal_scroll_up(&msg);
             break;
-        case CONC_SIG_SCAN_DEV_SERVICE:
-            signal_scan_dev_service(&msg);
+        case CONC_SIG_SET_DEV_TARGET:
+            signal_set_dev_target(&msg);
             break;
         case CONC_SIG_SCROLL_DOWN:
             signal_scroll_down(&msg);

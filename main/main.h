@@ -16,8 +16,11 @@ typedef enum
     CONC_SIG_SAVE_DEV_RSSI,
     CONC_SIG_START_CONNECTION,
     CONC_SIG_SEND_PIN,
+    CONC_SIG_SET_PAIRED,
+    CONC_SIG_SET_UNPAIRED,
+    CONC_SIG_SET_HANDLE,
     CONC_SIG_SCROLL_UP,
-    CONC_SIG_SCAN_DEV_SERVICE,
+    CONC_SIG_SET_DEV_TARGET,
     CONC_SIG_SCROLL_DOWN,
 
 } conc_signal_t;
@@ -59,4 +62,36 @@ extern QueueHandle_t conc_queue;
         xQueueSend(conc_queue, &msg, pdMS_TO_TICKS(1000)); \
     } while (0)
 
-    
+#define CONC_SIG_SET_PAIRED(dev_addr)                      \
+    do                                                     \
+    {                                                      \
+        conc_msg_t msg;                                    \
+        msg.signal = CONC_SIG_SET_PAIRED;                  \
+        msg.data = dev_addr;                               \
+        xQueueSend(conc_queue, &msg, pdMS_TO_TICKS(1000)); \
+    } while (0)
+
+#define CONC_SIG_SET_UNPAIRED()                            \
+    do                                                     \
+    {                                                      \
+        conc_msg_t msg;                                    \
+        msg.signal = CONC_SIG_SET_UNPAIRED;                \
+        xQueueSend(conc_queue, &msg, pdMS_TO_TICKS(1000)); \
+    } while (0)
+
+#define CONC_SIG_SET_HANDLE(handle)                        \
+    do                                                     \
+    {                                                      \
+        conc_msg_t msg;                                    \
+        msg.signal = CONC_SIG_SET_HANDLE;                  \
+        msg.data = (void *)handle;                         \
+        xQueueSend(conc_queue, &msg, pdMS_TO_TICKS(1000)); \
+    } while (0)
+
+#define CONC_SIG_SET_DEV_TARGET()                          \
+    do                                                     \
+    {                                                      \
+        conc_msg_t msg;                                    \
+        msg.signal = CONC_SIG_SET_DEV_TARGET;              \
+        xQueueSend(conc_queue, &msg, pdMS_TO_TICKS(1000)); \
+    } while (0)

@@ -19,6 +19,10 @@
 
 #define RADIO_INIT_TAG "RADIO_INIT_TAG"
 
+bool is_paired = false;
+uint8_t dev_mac[6] = {0};
+uint32_t handle = 0;
+
 void radio_init(on_profile_init_t on_profile_init,
                 on_discovery_stops_t on_discovery_stops,
                 on_new_dev_name_t on_new_dev_name,
@@ -26,7 +30,8 @@ void radio_init(on_profile_init_t on_profile_init,
                 on_scan_dev_service_t on_scan_dev_service,
                 on_cl_init_t on_cl_init,
                 on_open_t on_open,
-                on_pin_req_t on_pin_req)
+                on_pin_req_t on_pin_req,
+                on_close_t on_close)
 {
     on_profile_init_cb = on_profile_init;
     on_discovery_stops_cb = on_discovery_stops;
@@ -36,6 +41,7 @@ void radio_init(on_profile_init_t on_profile_init,
     on_cl_init_cb = on_cl_init;
     on_open_cb = on_open;
     on_pin_req_cb = on_pin_req;
+    on_close_cb = on_close;
 
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
@@ -94,18 +100,23 @@ void radio_init(on_profile_init_t on_profile_init,
     esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE);
 }
 
-void radio_scan_dev_service(uint8_t *mac)
+void radio_scan_dev_service()
 {
     printf("Scanning dev service for: %02x:%02x:%02x:%02x:%02x:%02x\n",
-           mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+           dev_mac[0], dev_mac[1], dev_mac[2], dev_mac[3], dev_mac[4], dev_mac[5]);
     // esp_spp_connect(ESP_SPP_SEC_AUTHENTICATE, ESP_SPP_ROLE_MASTER, param->disc_comp.scn[0], mac);
-    dev_mac = mac;
-    esp_spp_start_discovery(mac);
+
+    esp_spp_start_discovery(dev_mac);
 }
 
 void radio_start_connection()
 {
     esp_spp_connect(ESP_SPP_SEC_AUTHENTICATE, ESP_SPP_ROLE_MASTER, serv_channel, dev_mac);
+}
+
+void radio_start_disconnection()
+{
+    esp_spp_disconnect(handle);
 }
 
 void radio_send_pin(uint8_t *pin_code, uint8_t pin_size)
@@ -121,4 +132,42 @@ void radio_start_discovery()
 void radio_stop_discovery()
 {
     esp_bt_gap_cancel_discovery();
+}
+
+void radio_set_as_paired()
+{
+    is_paired = true;
+}
+
+void radio_set_as_unpaired()
+{
+    is_paired = false;
+}
+
+bool radio_is_paired()
+{
+    return is_paired;
+}
+void radio_set_dev_mac(uint8_t *new_dev_mac)
+{
+    dev_mac[0] = new_dev_mac[0];
+    dev_mac[1] = new_dev_mac[1];
+    dev_mac[2] = new_dev_mac[2];
+    dev_mac[3] = new_dev_mac[3];
+    dev_mac[4] = new_dev_mac[4];
+    dev_mac[5] = new_dev_mac[5];
+}
+uint8_t *radio_get_dev_mac()
+{
+    return dev_mac;
+}
+
+void radio_set_handle(uint32_t new_handle)
+{
+    handle = new_handle;
+}
+
+uint32_t radio_get_handle()
+{
+    return handle;
 }

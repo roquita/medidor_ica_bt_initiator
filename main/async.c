@@ -1,6 +1,8 @@
 #include <string.h>
 #include "main.h"
 
+bool need_new_conn = false;
+
 void on_profile_init(void)
 {
     conc_msg_t msg;
@@ -57,14 +59,12 @@ void on_new_dev_rssi(uint8_t *bd_addr, void *val)
     xQueueSend(conc_queue, &msg, pdMS_TO_TICKS(1000));
 }
 
-void on_scan_dev_service(bool success, void *dev_mac)
+void on_scan_dev_service(bool success)
 {
     if (success)
     {
         conc_msg_t msg;
         msg.signal = CONC_SIG_START_CONNECTION;
-        msg.data = dev_mac;
-
         xQueueSendFromISR(conc_queue, &msg, NULL);
     }
     else
@@ -72,26 +72,25 @@ void on_scan_dev_service(bool success, void *dev_mac)
     }
 }
 
-void on_cl_init(bool success)
+void on_cl_init(bool success, uint32_t handle)
 {
     if (success)
     {
+        CONC_SIG_SET_HANDLE(handle);
     }
     else
     {
     }
 }
 
-void on_open(bool success)
+void on_open(bool success, uint8_t *dev_addr)
 {
     if (success)
     {
-        /*
-        conc_msg_t msg;
-        msg.signal = CONC_SIG_STOP_DISCOVERY;
+        uint8_t *dev_addr_copy = (uint8_t *)malloc(6);
+        memcpy(dev_addr_copy, dev_addr, 6);
 
-        xQueueSendFromISR(conc_queue, &msg, NULL);
-        */
+        CONC_SIG_SET_PAIRED(dev_addr_copy);
     }
     else
     {
@@ -101,6 +100,19 @@ void on_open(bool success)
 void on_pin_req(void)
 {
     SIGNAL_SEND_PIN();
+}
+
+void on_close()
+{
+    CONC_SIG_SET_UNPAIRED();
+    CONC_SIG_SET_HANDLE(0);
+
+    if (need_new_conn)
+    {
+        vTaskDelay(pdMS_TO_TICKS(3000));
+        need_new_conn = false;
+        CONC_SIG_SET_DEV_TARGET();
+    }
 }
 
 void on_button_arrow_up_pressed()
@@ -113,10 +125,7 @@ void on_button_arrow_up_pressed()
 
 void on_button_enter_pressed()
 {
-    conc_msg_t msg;
-    msg.signal = CONC_SIG_SCAN_DEV_SERVICE;
-
-    xQueueSendFromISR(conc_queue, &msg, NULL);
+    CONC_SIG_SET_DEV_TARGET();
 }
 
 void on_button_arrow_down_pressed()
