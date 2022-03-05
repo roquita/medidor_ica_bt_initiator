@@ -1,10 +1,15 @@
+#include "signal.c"
+#include "async.c"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
+#include "freertos/queue.h"
+#include "freertos/task.h"
 #include "radio.h"
-#include "main_async.h"
 #include "scanner.h"
+#include "button.h"
 
-SemaphoreHandle_t printSemph = NULL;
+QueueHandle_t conc_queue = NULL;
 
 // static const esp_spp_sec_t sec_mask = ESP_SPP_SEC_AUTHENTICATE;
 // static const esp_spp_role_t role_master = ESP_SPP_ROLE_MASTER;
@@ -17,13 +22,61 @@ SemaphoreHandle_t printSemph = NULL;
 
 void app_main(void)
 {
-    radio_init(on_profile_init, on_discovery_stops, on_new_dev_name, on_new_dev_rssi);
+    conc_queue = xQueueCreate(20, sizeof(conc_msg_t));
 
-    printSemph = xSemaphoreCreateBinary();
+    button_init(on_button_arrow_up_pressed,
+                on_button_enter_pressed,
+                on_button_arrow_down_pressed);
+
+    radio_init(on_profile_init,
+               on_discovery_stops,
+               on_new_dev_name,
+               on_new_dev_rssi,
+               on_scan_dev_service,
+               on_cl_init,
+               on_open,
+               on_pin_req);
 
     while (1)
     {
-        xSemaphoreTake(printSemph, portMAX_DELAY);
-        scanner_print_dev_list();
+        conc_msg_t msg;
+        xQueueReceive(conc_queue, &msg, portMAX_DELAY);
+
+        switch (msg.signal)
+        {
+        case CONC_SIG_START_DISCOVERY:
+            signal_start_discovery(&msg);
+            break;
+        case CONC_SIG_STOP_DISCOVERY:
+            signal_stop_discovery(&msg);
+            break;
+        case CONC_SIG_CLEAN_LISTS:
+            signal_clean_lists(&msg);
+            break;
+        case CONC_SIG_SAVE_DEV_NAME:
+            signal_save_dev_name(&msg);
+            break;
+        case CONC_SIG_SAVE_DEV_RSSI:
+            signal_save_dev_rssi(&msg);
+            break;
+        case CONC_SIG_START_CONNECTION:
+            signal_start_connection(&msg);
+            break;
+        case CONC_SIG_SEND_PIN:
+            signal_send_pin(&msg);
+            break;
+        case CONC_SIG_SCROLL_UP:
+            signal_scroll_up(&msg);
+            break;
+        case CONC_SIG_SCAN_DEV_SERVICE:
+            signal_scan_dev_service(&msg);
+            break;
+        case CONC_SIG_SCROLL_DOWN:
+            signal_scroll_down(&msg);
+            break;
+
+        default:
+            break;
+        }
     }
 }

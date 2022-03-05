@@ -22,6 +22,15 @@ on_profile_init_t on_profile_init_cb = NULL;
 on_discovery_stops_t on_discovery_stops_cb = NULL;
 on_new_dev_name_t on_new_dev_name_cb = NULL;
 on_new_dev_rssi_t on_new_dev_rssi_cb = NULL;
+on_scan_dev_service_t on_scan_dev_service_cb = NULL;
+on_cl_init_t on_cl_init_cb = NULL;
+on_open_t on_open_cb = NULL;
+on_pin_req_t on_pin_req_cb = NULL;
+
+uint8_t *dev_mac = NULL;
+uint8_t serv_channel = 0;
+uint32_t conn_handle = 0;
+bool is_connected = false;
 
 void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 {
@@ -34,15 +43,30 @@ void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
         break;
     case ESP_SPP_DISCOVERY_COMP_EVT:
         ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_SPP_DISCOVERY_COMP_EVT status=%d scn_num=%d", param->disc_comp.status, param->disc_comp.scn_num);
-        /*
-                if (param->disc_comp.status == ESP_SPP_SUCCESS)
-                {
-                    esp_spp_connect(sec_mask, role_master, param->disc_comp.scn[0], peer_bd_addr);
-                }
-        */
+
+        if (param->disc_comp.status != ESP_SPP_SUCCESS)
+        {
+            on_scan_dev_service_cb(false);
+            break;
+        }
+
+        serv_channel = param->disc_comp.scn[0];
+        on_scan_dev_service_cb(true);
+
         break;
     case ESP_SPP_OPEN_EVT:
         ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_SPP_OPEN_EVT");
+
+        if (param->open.status == ESP_SPP_SUCCESS)
+        {            
+            is_connected = true;
+            conn_handle = param->open.handle;
+            on_open_cb(true);
+        }
+        else
+        {
+            on_open_cb(false);
+        }
 
         break;
     case ESP_SPP_CLOSE_EVT:
@@ -53,6 +77,16 @@ void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
         break;
     case ESP_SPP_CL_INIT_EVT:
         ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_SPP_CL_INIT_EVT");
+
+        if (param->cl_init.status == ESP_SPP_SUCCESS)
+        {            
+            on_cl_init_cb(true);
+        }
+        else
+        {
+            on_cl_init_cb(false);
+        }
+
         break;
     case ESP_SPP_DATA_IND_EVT:
         ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_SPP_DATA_IND_EVT");
@@ -140,22 +174,10 @@ void esp_bt_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param)
     }
     case ESP_BT_GAP_PIN_REQ_EVT:
     {
-        ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_BT_GAP_PIN_REQ_EVT min_16_digit:%d", param->pin_req.min_16_digit);
-        if (param->pin_req.min_16_digit)
+        ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_BT_GAP_PIN_REQ_EVT ");
+        if (!param->pin_req.min_16_digit)
         {
-            ESP_LOGI(RADIO_CALLBACKS_TAG, "Input pin code: 0000 0000 0000 0000");
-            esp_bt_pin_code_t pin_code = {0};
-            esp_bt_gap_pin_reply(param->pin_req.bda, true, 16, pin_code);
-        }
-        else
-        {
-            ESP_LOGI(RADIO_CALLBACKS_TAG, "Input pin code: 1234");
-            esp_bt_pin_code_t pin_code;
-            pin_code[0] = '1';
-            pin_code[1] = '2';
-            pin_code[2] = '3';
-            pin_code[3] = '4';
-            esp_bt_gap_pin_reply(param->pin_req.bda, true, 4, pin_code);
+            on_pin_req_cb();
         }
         break;
     }

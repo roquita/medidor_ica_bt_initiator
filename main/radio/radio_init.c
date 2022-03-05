@@ -22,12 +22,20 @@
 void radio_init(on_profile_init_t on_profile_init,
                 on_discovery_stops_t on_discovery_stops,
                 on_new_dev_name_t on_new_dev_name,
-                on_new_dev_rssi_t on_new_dev_rssi)
+                on_new_dev_rssi_t on_new_dev_rssi,
+                on_scan_dev_service_t on_scan_dev_service,
+                on_cl_init_t on_cl_init,
+                on_open_t on_open,
+                on_pin_req_t on_pin_req)
 {
     on_profile_init_cb = on_profile_init;
     on_discovery_stops_cb = on_discovery_stops;
     on_new_dev_name_cb = on_new_dev_name;
     on_new_dev_rssi_cb = on_new_dev_rssi;
+    on_scan_dev_service_cb = on_scan_dev_service;
+    on_cl_init_cb = on_cl_init;
+    on_open_cb = on_open;
+    on_pin_req_cb = on_pin_req;
 
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
@@ -84,4 +92,33 @@ void radio_init(on_profile_init_t on_profile_init,
 
     esp_bt_dev_set_device_name(DEVICE_NAME);
     esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE);
+}
+
+void radio_scan_dev_service(uint8_t *mac)
+{
+    printf("Scanning dev service for: %02x:%02x:%02x:%02x:%02x:%02x\n",
+           mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    // esp_spp_connect(ESP_SPP_SEC_AUTHENTICATE, ESP_SPP_ROLE_MASTER, param->disc_comp.scn[0], mac);
+    dev_mac = mac;
+    esp_spp_start_discovery(mac);
+}
+
+void radio_start_connection()
+{
+    esp_spp_connect(ESP_SPP_SEC_AUTHENTICATE, ESP_SPP_ROLE_MASTER, serv_channel, dev_mac);
+}
+
+void radio_send_pin(uint8_t *pin_code, uint8_t pin_size)
+{
+    esp_bt_gap_pin_reply(dev_mac, true, pin_size, pin_code);
+}
+
+void radio_start_discovery()
+{
+    esp_bt_gap_start_discovery(ESP_BT_INQ_MODE_GENERAL_INQUIRY, 5, 0);
+}
+
+void radio_stop_discovery()
+{
+    esp_bt_gap_cancel_discovery();
 }
