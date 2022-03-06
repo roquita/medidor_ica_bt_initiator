@@ -16,6 +16,7 @@
 
 #include "radio_callbacks.h"
 #include "main.h"
+#include "radio_uart_io.c"
 
 #define RADIO_INIT_TAG "RADIO_INIT_TAG"
 
@@ -98,12 +99,14 @@ void radio_init(on_profile_init_t on_profile_init,
 
     esp_bt_dev_set_device_name(DEVICE_NAME);
     esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE);
+
+    radio_uart_ioc_init();
 }
 
 void radio_scan_dev_service()
 {
-    printf("Scanning dev service for: %02x:%02x:%02x:%02x:%02x:%02x\n",
-           dev_mac[0], dev_mac[1], dev_mac[2], dev_mac[3], dev_mac[4], dev_mac[5]);
+    ESP_LOGI(RADIO_INIT_TAG, "Scanning dev service for: %02x:%02x:%02x:%02x:%02x:%02x\n",
+             dev_mac[0], dev_mac[1], dev_mac[2], dev_mac[3], dev_mac[4], dev_mac[5]);
     // esp_spp_connect(ESP_SPP_SEC_AUTHENTICATE, ESP_SPP_ROLE_MASTER, param->disc_comp.scn[0], mac);
 
     esp_spp_start_discovery(dev_mac);

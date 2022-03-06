@@ -1,3 +1,4 @@
+#pragma once
 #include "radio_callbacks.h"
 
 void radio_init(on_profile_init_t,

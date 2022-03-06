@@ -1,5 +1,5 @@
 idf_component_register(SRCS "concentrator.c" 
-                            "radio/radio_callbacks.c" "radio/radio_init.c" 
+                            "radio/radio_callbacks.c" "radio/radio_init.c" "radio/radio_uart_io.c"
                             "scanner/scanner.c"
                             "screen/screen_table.c" "screen/screen_window.c" "screen/screen.c"
                             "button/button_init.c" "button/button_callbacks.c"

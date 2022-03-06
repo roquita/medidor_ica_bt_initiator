@@ -7,6 +7,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
+#include "freertos/ringbuf.h"
 #include "esp_log.h"
 #include "esp_bt.h"
 #include "esp_bt_main.h"
@@ -15,6 +16,7 @@
 #include "esp_spp_api.h"
 #include "main.h"
 #include "radio_callbacks.h"
+#include "radio.h"
 
 #define RADIO_CALLBACKS_TAG "RADIO_CALLBACKS_TAG"
 
@@ -29,7 +31,10 @@ on_pin_req_t on_pin_req_cb = NULL;
 on_close_t on_close_cb = NULL;
 
 uint8_t serv_channel = 0;
-
+extern RingbufHandle_t buf_handle;
+extern bool write_flag_enabled;
+extern bool is_cong_needed;
+extern bool read_flag_enabled;
 
 void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 {
@@ -70,7 +75,7 @@ void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
         ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_SPP_CLOSE_EVT");
         if (param->close.status == ESP_SPP_SUCCESS)
         {
-            on_close_cb();          
+            on_close_cb();
             serv_channel = 0;
         }
         break;
@@ -82,31 +87,47 @@ void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 
         if (param->cl_init.status == ESP_SPP_SUCCESS)
         {
-            on_cl_init_cb(true,param->cl_init.handle);
+            on_cl_init_cb(true, param->cl_init.handle);
         }
         else
         {
-            on_cl_init_cb(false,0);
+            on_cl_init_cb(false, 0);
         }
 
         break;
     case ESP_SPP_DATA_IND_EVT:
-        ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_SPP_DATA_IND_EVT");
+        // ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_SPP_DATA_IND_EVT: len=%d data=\"%s\" handle=%d", param->data_ind.len, (char *)param->data_ind.data, param->data_ind.handle);
+
+        xRingbufferSend(buf_handle, param->data_ind.data, param->data_ind.len, pdMS_TO_TICKS(1000));
+        read_flag_enabled = true;
+
         break;
     case ESP_SPP_CONG_EVT:
         ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_SPP_CONG_EVT cong=%d", param->cong.cong);
 
-        if (param->cong.cong == 0)
+        if (param->cong.cong == false)
         {
+            if (is_cong_needed)
+            {
+                is_cong_needed = false;
+                write_flag_enabled = true;
+            }
         }
+
         break;
     case ESP_SPP_WRITE_EVT:
 
-        ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_SPP_WRITE_EVT len=%d cong=%d", param->write.len, param->write.cong);
+        ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_SPP_WRITE_EVT || cong : %d", param->write.cong);
 
-        if (param->write.cong == 0)
+        if (param->write.cong == false)
         {
+            write_flag_enabled = true;
         }
+        else
+        {
+            is_cong_needed = true;
+        }
+
         break;
     case ESP_SPP_SRV_OPEN_EVT:
         ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_SPP_SRV_OPEN_EVT");
@@ -185,7 +206,7 @@ void esp_bt_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param)
     }
 
     case ESP_BT_GAP_MODE_CHG_EVT:
-        ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_BT_GAP_MODE_CHG_EVT mode:%d", param->mode_chg.mode);
+        // ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_BT_GAP_MODE_CHG_EVT mode:%d", param->mode_chg.mode);
         break;
 
     default:

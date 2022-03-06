@@ -48,4 +48,5 @@ void button_init(on_button_arrow_up_pressed_t on_button_arrow_up_pressed,
     gpio_isr_handler_add(4, on_arrow_down_pressed, NULL);
 
     timer_init();
+
 }

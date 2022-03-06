@@ -1,4 +1,4 @@
-
+#pragma once
 #include "esp_gap_bt_api.h"
 #include "esp_spp_api.h"
 

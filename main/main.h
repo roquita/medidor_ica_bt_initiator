@@ -46,6 +46,15 @@ extern QueueHandle_t conc_queue;
         xQueueSend(conc_queue, &msg, pdMS_TO_TICKS(1000)); \
     } while (0)
 
+#define CONC_SIG_STOP_DISCOVERY()                          \
+    do                                                     \
+    {                                                      \
+        conc_msg_t msg;                                    \
+        msg.signal = CONC_SIG_STOP_DISCOVERY;              \
+        xQueueSend(conc_queue, &msg, pdMS_TO_TICKS(1000)); \
+    } while (0)
+
+
 #define SIGNAL_CLEAN_LISTS()                               \
     do                                                     \
     {                                                      \
@@ -95,3 +104,5 @@ extern QueueHandle_t conc_queue;
         msg.signal = CONC_SIG_SET_DEV_TARGET;              \
         xQueueSend(conc_queue, &msg, pdMS_TO_TICKS(1000)); \
     } while (0)
+
+

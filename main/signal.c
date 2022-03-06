@@ -155,8 +155,7 @@ void signal_set_dev_target(conc_msg_t *msg)
         }
     }
     else
-    {
-        printf("Button enter pressed: master was unpaired\n");
+    {        
         // to connect
         radio_set_dev_mac(sel_dev_addr);
         radio_scan_dev_service();

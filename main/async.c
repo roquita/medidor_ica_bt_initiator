@@ -2,6 +2,7 @@
 #include "main.h"
 
 bool need_new_conn = false;
+bool is_pared = false;
 
 void on_profile_init(void)
 {
@@ -16,7 +17,11 @@ void on_discovery_stops()
     SIGNAL_CLEAN_LISTS();
 
     // screen_update();
-    SIGNAL_START_DISCOVERY();
+
+    if (!is_pared)
+    {
+        SIGNAL_START_DISCOVERY();
+    }
 }
 
 void on_new_dev_name(uint8_t *bd_addr, void *val)
@@ -87,10 +92,13 @@ void on_open(bool success, uint8_t *dev_addr)
 {
     if (success)
     {
+        is_pared = true;
+
         uint8_t *dev_addr_copy = (uint8_t *)malloc(6);
         memcpy(dev_addr_copy, dev_addr, 6);
 
         CONC_SIG_SET_PAIRED(dev_addr_copy);
+        CONC_SIG_STOP_DISCOVERY();
     }
     else
     {
@@ -104,6 +112,8 @@ void on_pin_req(void)
 
 void on_close()
 {
+    is_pared = false;
+
     CONC_SIG_SET_UNPAIRED();
     CONC_SIG_SET_HANDLE(0);
 
@@ -112,6 +122,10 @@ void on_close()
         vTaskDelay(pdMS_TO_TICKS(3000));
         need_new_conn = false;
         CONC_SIG_SET_DEV_TARGET();
+    }
+    else
+    {
+        SIGNAL_START_DISCOVERY();
     }
 }
 
