@@ -74,6 +74,7 @@ void on_scan_dev_service(bool success)
     }
     else
     {
+        CONC_SIG_UNBLOCK_BUTTONS();
     }
 }
 
@@ -85,6 +86,7 @@ void on_cl_init(bool success, uint32_t handle)
     }
     else
     {
+        CONC_SIG_UNBLOCK_BUTTONS();
     }
 }
 
@@ -103,6 +105,8 @@ void on_open(bool success, uint8_t *dev_addr)
     else
     {
     }
+
+    CONC_SIG_UNBLOCK_BUTTONS();
 }
 
 void on_pin_req(void)

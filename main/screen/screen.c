@@ -89,6 +89,17 @@ void screen_update()
         ssd1306_display_text(&dev, i * 2 + 1, bufer, strlen(bufer), false);
     }
 }
+
+void screen_print_pairing()
+{
+    ssd1306_display_text(&dev, 2, " -- Pairing... -- ", 16, true);
+}
+
+void screen_clean()
+{
+    ssd1306_clear_screen(&dev, true);
+}
+
 int screen_get_selected_index()
 {
     int cursor_pos = screen_window_get_cursor_pos();

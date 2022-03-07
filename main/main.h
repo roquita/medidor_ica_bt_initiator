@@ -18,6 +18,7 @@ typedef enum
     CONC_SIG_SEND_PIN,
     CONC_SIG_SET_PAIRED,
     CONC_SIG_SET_UNPAIRED,
+    CONC_SIG_UNBLOCK_BUTTONS,
     CONC_SIG_SET_HANDLE,
     CONC_SIG_SCROLL_UP,
     CONC_SIG_SET_DEV_TARGET,
@@ -53,7 +54,6 @@ extern QueueHandle_t conc_queue;
         msg.signal = CONC_SIG_STOP_DISCOVERY;              \
         xQueueSend(conc_queue, &msg, pdMS_TO_TICKS(1000)); \
     } while (0)
-
 
 #define SIGNAL_CLEAN_LISTS()                               \
     do                                                     \
@@ -105,4 +105,10 @@ extern QueueHandle_t conc_queue;
         xQueueSend(conc_queue, &msg, pdMS_TO_TICKS(1000)); \
     } while (0)
 
-
+#define CONC_SIG_UNBLOCK_BUTTONS()                         \
+    do                                                     \
+    {                                                      \
+        conc_msg_t msg;                                    \
+        msg.signal = CONC_SIG_UNBLOCK_BUTTONS;             \
+        xQueueSend(conc_queue, &msg, pdMS_TO_TICKS(1000)); \
+    } while (0)

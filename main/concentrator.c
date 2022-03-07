@@ -75,6 +75,9 @@ void app_main(void)
         case CONC_SIG_SET_UNPAIRED:
             signal_set_unpaired(&msg);
             break;
+        case CONC_SIG_UNBLOCK_BUTTONS:
+            signal_unblock_buttons(&msg);
+            break;
         case CONC_SIG_SET_HANDLE:
             signal_set_handle(&msg);
             break;

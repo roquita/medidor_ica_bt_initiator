@@ -11,6 +11,7 @@
 #include "radio.h"
 
 extern bool need_new_conn;
+bool are_buttons_blocked = false;
 
 void signal_start_discovery(conc_msg_t *msg)
 {
@@ -33,7 +34,8 @@ void signal_clean_lists(conc_msg_t *msg)
         scanner_print_dev_list();
     }
 
-    screen_update();
+    if (!are_buttons_blocked)
+        screen_update();
 }
 
 void signal_save_dev_name(conc_msg_t *msg)
@@ -109,7 +111,8 @@ void signal_set_paired(conc_msg_t *msg)
 
     free(dev_addr);
 
-    screen_update();
+   // if (!are_buttons_blocked)
+    //    screen_update();
 }
 
 void signal_set_unpaired(conc_msg_t *msg)
@@ -120,6 +123,14 @@ void signal_set_unpaired(conc_msg_t *msg)
 
     uint8_t null_addr[6] = {0};
     radio_set_dev_mac(null_addr);
+
+  //  if (!are_buttons_blocked)
+        screen_update();
+}
+
+void signal_unblock_buttons(conc_msg_t *msg)
+{
+    are_buttons_blocked = false;
 
     screen_update();
 }
@@ -132,6 +143,9 @@ void signal_set_handle(conc_msg_t *msg)
 
 void signal_scroll_up(conc_msg_t *msg)
 {
+    if (are_buttons_blocked)
+        return;
+
     screen_sync_with_scroll_up();
     screen_update();
 
@@ -140,6 +154,9 @@ void signal_scroll_up(conc_msg_t *msg)
 
 void signal_set_dev_target(conc_msg_t *msg)
 {
+    if (are_buttons_blocked)
+        return;
+
     int index = screen_get_selected_index();
     uint8_t *sel_dev_addr = scanner_get_mac_from_index(index);
 
@@ -161,14 +178,23 @@ void signal_set_dev_target(conc_msg_t *msg)
     }
     else
     {
+        are_buttons_blocked = true;
+        screen_clean();
+        screen_print_pairing();
+        
         // to connect
         radio_set_dev_mac(sel_dev_addr);
         radio_scan_dev_service();
+
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
 
 void signal_scroll_down(conc_msg_t *msg)
 {
+    if (are_buttons_blocked)
+        return;
+
     screen_sync_with_scroll_down();
     screen_update();
 
