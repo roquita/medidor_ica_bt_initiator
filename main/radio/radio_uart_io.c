@@ -19,7 +19,8 @@
 RingbufHandle_t buf_handle;
 bool write_flag_enabled = true;
 bool is_cong_needed = false;
-bool read_flag_enabled = false;
+// bool read_flag_enabled = false;
+uint32_t total_data_len;
 
 extern uint32_t handle;
 
@@ -32,12 +33,14 @@ void uart_tx_task(void *arg)
 
     while (1)
     {
-        if (read_flag_enabled)
+        // if (read_flag_enabled)
+        if (total_data_len)
         {
-            vTaskDelay(pdMS_TO_TICKS(300)); // vTaskDelay(pdMS_TO_TICKS(200));
+            // vTaskDelay(pdMS_TO_TICKS(300)); // vTaskDelay(pdMS_TO_TICKS(200));
 
             size_t size = 0;
-            void *data = xRingbufferReceive(buf_handle, &size, pdMS_TO_TICKS(1000));
+            void *data = xRingbufferReceive(buf_handle, &size, 0); // pdMS_TO_TICKS(1000)
+            total_data_len -= size;
 
             if (data)
             {
@@ -46,7 +49,7 @@ void uart_tx_task(void *arg)
 
                 vRingbufferReturnItem(buf_handle, data);
             }
-            read_flag_enabled = false;
+            // read_flag_enabled = false;
         }
         vTaskDelay(1);
     }

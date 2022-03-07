@@ -34,7 +34,8 @@ uint8_t serv_channel = 0;
 extern RingbufHandle_t buf_handle;
 extern bool write_flag_enabled;
 extern bool is_cong_needed;
-extern bool read_flag_enabled;
+//extern bool read_flag_enabled;
+extern uint32_t total_data_len = 0;
 
 void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 {
@@ -98,8 +99,9 @@ void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
     case ESP_SPP_DATA_IND_EVT:
         // ESP_LOGI(RADIO_CALLBACKS_TAG, "ESP_SPP_DATA_IND_EVT: len=%d data=\"%s\" handle=%d", param->data_ind.len, (char *)param->data_ind.data, param->data_ind.handle);
 
-        xRingbufferSend(buf_handle, param->data_ind.data, param->data_ind.len, pdMS_TO_TICKS(1000));
-        read_flag_enabled = true;
+        xRingbufferSend(buf_handle, param->data_ind.data, param->data_ind.len, portMAX_DELAY);
+        //read_flag_enabled = true;
+        total_data_len += param->data_ind.len;
 
         break;
     case ESP_SPP_CONG_EVT:

@@ -31,7 +31,7 @@ void signal_clean_lists(conc_msg_t *msg)
     if (macs_removed)
     {
         screen_sync_data();
-        scanner_print_dev_list();
+        //scanner_print_dev_list();
     }
 
     if (!are_buttons_blocked)
@@ -47,7 +47,7 @@ void signal_save_dev_name(conc_msg_t *msg)
     if (new_mac_added)
     {
         screen_sync_data();
-        scanner_print_dev_list();
+        //scanner_print_dev_list();
     }
 
     if (index == -1)
@@ -71,7 +71,7 @@ void signal_save_dev_rssi(conc_msg_t *msg)
     if (new_mac_added)
     {
         screen_sync_data();
-        scanner_print_dev_list();
+        //scanner_print_dev_list();
     }
 
     if (index == -1)
@@ -111,7 +111,7 @@ void signal_set_paired(conc_msg_t *msg)
 
     free(dev_addr);
 
-   // if (!are_buttons_blocked)
+    // if (!are_buttons_blocked)
     //    screen_update();
 }
 
@@ -124,8 +124,8 @@ void signal_set_unpaired(conc_msg_t *msg)
     uint8_t null_addr[6] = {0};
     radio_set_dev_mac(null_addr);
 
-  //  if (!are_buttons_blocked)
-        screen_update();
+    //if (!are_buttons_blocked)
+        //screen_update();
 }
 
 void signal_unblock_buttons(conc_msg_t *msg)
@@ -181,7 +181,7 @@ void signal_set_dev_target(conc_msg_t *msg)
         are_buttons_blocked = true;
         screen_clean();
         screen_print_pairing();
-        
+
         // to connect
         radio_set_dev_mac(sel_dev_addr);
         radio_scan_dev_service();

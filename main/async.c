@@ -120,6 +120,7 @@ void on_close()
 
     CONC_SIG_SET_UNPAIRED();
     CONC_SIG_SET_HANDLE(0);
+    CONC_SIG_UNBLOCK_BUTTONS();
 
     if (need_new_conn)
     {
