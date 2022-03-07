@@ -32,6 +32,8 @@ void signal_clean_lists(conc_msg_t *msg)
         screen_sync_data();
         scanner_print_dev_list();
     }
+
+    screen_update();
 }
 
 void signal_save_dev_name(conc_msg_t *msg)
@@ -50,7 +52,7 @@ void signal_save_dev_name(conc_msg_t *msg)
         goto end;
 
     scanner_add_new_device_name(index, ctx->val);
-    screen_update();
+    // screen_update();
 
 end:
     free(ctx->bd_addr);
@@ -74,7 +76,6 @@ void signal_save_dev_rssi(conc_msg_t *msg)
         goto end;
 
     scanner_add_new_device_rssi(index, ctx->val);
-    screen_update();
 
 end:
     free(ctx->bd_addr);
@@ -107,6 +108,8 @@ void signal_set_paired(conc_msg_t *msg)
     radio_set_as_paired();
 
     free(dev_addr);
+
+    screen_update();
 }
 
 void signal_set_unpaired(conc_msg_t *msg)
@@ -117,6 +120,8 @@ void signal_set_unpaired(conc_msg_t *msg)
 
     uint8_t null_addr[6] = {0};
     radio_set_dev_mac(null_addr);
+
+    screen_update();
 }
 
 void signal_set_handle(conc_msg_t *msg)
@@ -130,7 +135,7 @@ void signal_scroll_up(conc_msg_t *msg)
     screen_sync_with_scroll_up();
     screen_update();
 
-    scanner_print_dev_list();
+    // scanner_print_dev_list();
 }
 
 void signal_set_dev_target(conc_msg_t *msg)
@@ -155,7 +160,7 @@ void signal_set_dev_target(conc_msg_t *msg)
         }
     }
     else
-    {        
+    {
         // to connect
         radio_set_dev_mac(sel_dev_addr);
         radio_scan_dev_service();
@@ -167,5 +172,5 @@ void signal_scroll_down(conc_msg_t *msg)
     screen_sync_with_scroll_down();
     screen_update();
 
-    scanner_print_dev_list();
+    // scanner_print_dev_list();
 }

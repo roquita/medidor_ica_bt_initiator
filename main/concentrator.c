@@ -38,6 +38,9 @@ void app_main(void)
                on_pin_req,
                on_close);
 
+    screen_init();
+    screen_update();
+
     while (1)
     {
         conc_msg_t msg;

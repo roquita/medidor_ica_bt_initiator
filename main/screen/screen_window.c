@@ -21,6 +21,12 @@ void screen_window_sync_with_table()
             min_cursor_pos = 0;
         else
             min_cursor_pos = max_table_pos - 3;
+
+        int window_length = max_cursor_pos - min_cursor_pos + 1;
+        if (cursor_relative_pos > window_length)
+        {
+            cursor_relative_pos = window_length;
+        }
     }
     else if (max_cursor_pos < max_table_pos)
     {
@@ -68,7 +74,10 @@ void screen_window_arrow_down_pressed()
     }
     else
     {
-        cursor_relative_pos++;
+        if (max_cursor_pos - min_cursor_pos + 1 > cursor_relative_pos)
+        {
+            cursor_relative_pos++;
+        }
     }
 }
 

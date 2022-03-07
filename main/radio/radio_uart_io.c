@@ -28,7 +28,7 @@ void uart_tx_task(void *arg)
     static const char *TX_TASK_TAG = "TX_TASK";
     esp_log_level_set(TX_TASK_TAG, ESP_LOG_INFO);
 
-    buf_handle = xRingbufferCreate(1028, RINGBUF_TYPE_BYTEBUF);
+    buf_handle = xRingbufferCreate(1024 * 5, RINGBUF_TYPE_BYTEBUF);
 
     while (1)
     {
@@ -60,16 +60,16 @@ void uart_rx_task(void *arg)
     int rxBytes = 0;
     while (1)
     {
-        rxBytes += uart_read_bytes(UART_NUM_0, data + rxBytes, RX_BUF_SIZE, pdMS_TO_TICKS(20)); // pdMS_TO_TICKS(1)
+        rxBytes += uart_read_bytes(UART_NUM_0, data + rxBytes, RX_BUF_SIZE - rxBytes, pdMS_TO_TICKS(20)); // pdMS_TO_TICKS(1)
 
         if (handle == 0)
         {
+            memset(data, 0, rxBytes);
             rxBytes = 0;
-            memset(data, 0, RX_BUF_SIZE);
             continue;
         }
         if (rxBytes > 0 && write_flag_enabled)
-        {      
+        {
             data[rxBytes] = 0;
             ESP_LOGI(RX_TASK_TAG, "Read %d bytes'", rxBytes);
             esp_spp_write(handle, rxBytes, data);
