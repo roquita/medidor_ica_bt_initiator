@@ -129,7 +129,7 @@ void radio_send_pin(uint8_t *pin_code, uint8_t pin_size)
 
 void radio_start_discovery()
 {
-    esp_bt_gap_start_discovery(ESP_BT_INQ_MODE_GENERAL_INQUIRY, 5, 0);
+    esp_bt_gap_start_discovery(ESP_BT_INQ_MODE_GENERAL_INQUIRY, 10, 0); // inq time = 5
 }
 
 void radio_stop_discovery()

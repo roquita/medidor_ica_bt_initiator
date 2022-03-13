@@ -8,20 +8,37 @@
 #include "radio.h"
 #include "scanner.h"
 #include "button.h"
+#include "driver/gpio.h"
 
 QueueHandle_t conc_queue = NULL;
 
-// static const esp_spp_sec_t sec_mask = ESP_SPP_SEC_AUTHENTICATE;
-// static const esp_spp_role_t role_master = ESP_SPP_ROLE_MASTER;
+void task_led(void *arg)
+{
+#define LED_PIN GPIO_NUM_2
 
-// esp_bd_addr_t peer_bd_addr = {0};
-// static uint8_t peer_bdname_len;
-// static char peer_bdname[ESP_BT_GAP_MAX_BDNAME_LEN + 1];
-// static const char remote_device_name[] = "ESP_SPP_ACCEPTOR";
-// static const uint8_t inq_num_rsps = 0;
+    const gpio_config_t led = {
+        .intr_type = GPIO_INTR_DISABLE,
+        .mode = GPIO_MODE_OUTPUT,
+        .pin_bit_mask = 1UL << LED_PIN,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+    };
+    gpio_config(&led);
+  
+
+    while (1)
+    {
+        gpio_set_level(LED_PIN, 0);
+        vTaskDelay(pdMS_TO_TICKS(100));
+        gpio_set_level(LED_PIN, 1);
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
 
 void app_main(void)
 {
+    xTaskCreatePinnedToCore(task_led, "task_led", 1024 * 2, NULL, 1, NULL, 1);
+
     conc_queue = xQueueCreate(20, sizeof(conc_msg_t));
 
     button_init(on_button_arrow_up_pressed,
@@ -39,8 +56,11 @@ void app_main(void)
                on_close);
 
     screen_init();
+    screen_clean();
+    screen_print_starting();
+    vTaskDelay(pdMS_TO_TICKS(1000));
     screen_update();
-
+    
     while (1)
     {
         conc_msg_t msg;

@@ -158,6 +158,7 @@ void signal_set_dev_target(conc_msg_t *msg)
         return;
 
     int index = screen_get_selected_index();
+    
     uint8_t *sel_dev_addr = scanner_get_mac_from_index(index);
 
     if (radio_is_paired())

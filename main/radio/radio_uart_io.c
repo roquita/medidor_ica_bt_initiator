@@ -23,7 +23,7 @@ bool is_cong_needed = false;
 uint32_t total_data_len;
 
 extern uint32_t handle;
-
+bool synced = false;
 void uart_tx_task(void *arg)
 {
     static const char *TX_TASK_TAG = "TX_TASK";
@@ -36,7 +36,7 @@ void uart_tx_task(void *arg)
         // if (read_flag_enabled)
         if (total_data_len)
         {
-            // vTaskDelay(pdMS_TO_TICKS(300)); // vTaskDelay(pdMS_TO_TICKS(200));
+            vTaskDelay(pdMS_TO_TICKS(10)); // vTaskDelay(pdMS_TO_TICKS(200));
 
             size_t size = 0;
             void *data = xRingbufferReceive(buf_handle, &size, 0); // pdMS_TO_TICKS(1000)
@@ -44,9 +44,44 @@ void uart_tx_task(void *arg)
 
             if (data)
             {
+
+                if (size > 0 && !synced)
+                {
+                    uint8_t val = *(uint8_t *)data;
+                    synced = true;
+                    //size--;
+                   // data++;
+
+                    char text[20] = {0};
+
+                    if (val == 0) //  7e1
+                    {
+                        //sprintf(text, "7e1\n");
+                        //uart_write_bytes(UART_NUM_0, text, strlen(text));
+                        //uart_wait_tx_done(UART_NUM_0, portMAX_DELAY);
+
+                        uart_set_word_length(UART_NUM_0, UART_DATA_7_BITS);
+                        uart_set_parity(UART_NUM_0, UART_PARITY_EVEN);
+                    }
+                    else // 8n1
+                    {
+                        //sprintf(text, "8n1\n");
+                        //uart_write_bytes(UART_NUM_0, text, strlen(text));
+                        //uart_wait_tx_done(UART_NUM_0, portMAX_DELAY);
+
+                        uart_set_word_length(UART_NUM_0, UART_DATA_8_BITS);
+                        uart_set_parity(UART_NUM_0, UART_PARITY_DISABLE);
+                    }
+
+                    if (size == 0)
+                    {
+                        vRingbufferReturnItem(buf_handle, data);
+                        continue;
+                    }
+                }
+
                 uart_write_bytes(UART_NUM_0, data, size);
                 uart_wait_tx_done(UART_NUM_0, portMAX_DELAY);
-
                 vRingbufferReturnItem(buf_handle, data);
             }
             // read_flag_enabled = false;
@@ -85,6 +120,7 @@ void uart_rx_task(void *arg)
 
 void radio_uart_ioc_init()
 {
+    /*
     const gpio_config_t gpio_conf = {
         .pin_bit_mask = 1UL << CONF_PIN,
         .mode = GPIO_MODE_INPUT,
@@ -93,11 +129,13 @@ void radio_uart_ioc_init()
         .intr_type = GPIO_INTR_DISABLE,
     };
     gpio_config(&gpio_conf);
-
+*/
     uart_config_t uart_config = {
-        .baud_rate = 9600,
-        .data_bits = gpio_get_level(CONF_PIN) == 0 ? UART_DATA_7_BITS : UART_DATA_8_BITS,
-        .parity = gpio_get_level(CONF_PIN) == 0 ? UART_PARITY_EVEN : UART_PARITY_DISABLE,
+        .baud_rate = 9600, // 9600,
+        //.data_bits = gpio_get_level(CONF_PIN) == 0 ? UART_DATA_7_BITS : UART_DATA_8_BITS,
+        //.parity = gpio_get_level(CONF_PIN) == 0 ? UART_PARITY_EVEN : UART_PARITY_DISABLE,
+        .data_bits = UART_DATA_7_BITS,
+        .parity = UART_PARITY_EVEN,
         .stop_bits = UART_STOP_BITS_1,
         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
         .source_clk = UART_SCLK_APB,
