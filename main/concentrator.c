@@ -24,14 +24,13 @@ void task_led(void *arg)
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
     };
     gpio_config(&led);
-  
 
     while (1)
     {
         gpio_set_level(LED_PIN, 0);
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(500));
         gpio_set_level(LED_PIN, 1);
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
 
@@ -60,7 +59,7 @@ void app_main(void)
     screen_print_starting();
     vTaskDelay(pdMS_TO_TICKS(1000));
     screen_update();
-    
+
     while (1)
     {
         conc_msg_t msg;
@@ -97,6 +96,9 @@ void app_main(void)
             break;
         case CONC_SIG_UNBLOCK_BUTTONS:
             signal_unblock_buttons(&msg);
+            break;
+        case CONC_SIG_UNBLOCK_SCANNER:
+            signal_unblock_scanner(&msg);
             break;
         case CONC_SIG_SET_HANDLE:
             signal_set_handle(&msg);

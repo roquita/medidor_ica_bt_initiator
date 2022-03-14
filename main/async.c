@@ -3,6 +3,7 @@
 
 bool need_new_conn = false;
 bool is_pared = false;
+extern bool are_scanner_blocked;
 
 void on_profile_init(void)
 {
@@ -74,6 +75,7 @@ void on_scan_dev_service(bool success)
     }
     else
     {
+        CONC_SIG_UNBLOCK_SCANNER();
         CONC_SIG_UNBLOCK_BUTTONS();
     }
 }
@@ -86,6 +88,7 @@ void on_cl_init(bool success, uint32_t handle)
     }
     else
     {
+        CONC_SIG_UNBLOCK_SCANNER();
         CONC_SIG_UNBLOCK_BUTTONS();
     }
 }
@@ -104,6 +107,7 @@ void on_open(bool success, uint8_t *dev_addr)
     }
     else
     {
+        CONC_SIG_UNBLOCK_SCANNER();
     }
 
     CONC_SIG_UNBLOCK_BUTTONS();
@@ -130,6 +134,8 @@ void on_close()
     }
     else
     {
+        
+        CONC_SIG_UNBLOCK_SCANNER();
         SIGNAL_START_DISCOVERY();
     }
 }

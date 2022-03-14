@@ -12,6 +12,7 @@
 
 extern bool need_new_conn;
 bool are_buttons_blocked = false;
+bool are_scanner_blocked = false;
 
 void signal_start_discovery(conc_msg_t *msg)
 {
@@ -27,11 +28,14 @@ void signal_stop_discovery(conc_msg_t *msg)
 
 void signal_clean_lists(conc_msg_t *msg)
 {
+    if (are_scanner_blocked)
+        return;
+
     bool macs_removed = scanner_remove_inactive_devs();
     if (macs_removed)
     {
         screen_sync_data();
-        //scanner_print_dev_list();
+        // scanner_print_dev_list();
     }
 
     if (!are_buttons_blocked)
@@ -42,12 +46,15 @@ void signal_save_dev_name(conc_msg_t *msg)
 {
     dev_data_ctx *ctx = (dev_data_ctx *)msg->data;
 
+    if (are_scanner_blocked)
+        goto end;
+
     int index;
     bool new_mac_added = scanner_add_new_device_mac(&index, ctx->bd_addr);
     if (new_mac_added)
     {
         screen_sync_data();
-        //scanner_print_dev_list();
+        // scanner_print_dev_list();
     }
 
     if (index == -1)
@@ -66,12 +73,15 @@ void signal_save_dev_rssi(conc_msg_t *msg)
 {
     dev_data_ctx *ctx = (dev_data_ctx *)msg->data;
 
+    if (are_scanner_blocked)
+        goto end;
+
     int index;
     bool new_mac_added = scanner_add_new_device_mac(&index, ctx->bd_addr);
     if (new_mac_added)
     {
         screen_sync_data();
-        //scanner_print_dev_list();
+        // scanner_print_dev_list();
     }
 
     if (index == -1)
@@ -124,8 +134,8 @@ void signal_set_unpaired(conc_msg_t *msg)
     uint8_t null_addr[6] = {0};
     radio_set_dev_mac(null_addr);
 
-    //if (!are_buttons_blocked)
-        //screen_update();
+    // if (!are_buttons_blocked)
+    // screen_update();
 }
 
 void signal_unblock_buttons(conc_msg_t *msg)
@@ -133,6 +143,11 @@ void signal_unblock_buttons(conc_msg_t *msg)
     are_buttons_blocked = false;
 
     screen_update();
+}
+
+void signal_unblock_scanner(conc_msg_t *msg)
+{
+    are_scanner_blocked = false;
 }
 
 void signal_set_handle(conc_msg_t *msg)
@@ -158,7 +173,7 @@ void signal_set_dev_target(conc_msg_t *msg)
         return;
 
     int index = screen_get_selected_index();
-    
+
     uint8_t *sel_dev_addr = scanner_get_mac_from_index(index);
 
     if (radio_is_paired())
@@ -172,13 +187,14 @@ void signal_set_dev_target(conc_msg_t *msg)
         else
         {
             // to connect
-            need_new_conn = true;
+            need_new_conn = true;            
             // to disconnect
             radio_start_disconnection();
         }
     }
     else
     {
+        are_scanner_blocked = true;
         are_buttons_blocked = true;
         screen_clean();
         screen_print_pairing();

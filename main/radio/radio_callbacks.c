@@ -166,10 +166,31 @@ void esp_bt_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param)
             case ESP_BT_GAP_DEV_PROP_EIR:
             {
                 char name[30] = {0};
-                uint8_t name_size = *(uint8_t *)(param->disc_res.prop[i].val) - 1;
+
+                int eir_name_len = *(uint8_t *)(param->disc_res.prop[i].val);
+                if (eir_name_len <= 1) // because of eir structure
+                {
+                    /*
+                    char texto1[40] = {0};
+                    sprintf(texto1, "eir_name_len falla detectada\n");
+                    uart_write_bytes(UART_NUM_0, texto1, strlen(texto1));
+                    uart_wait_tx_done(UART_NUM_0, portMAX_DELAY);
+                    */
+                    break;
+                }
+
+                uint8_t name_size = eir_name_len - 1;
+
+                /*
+                                char texto[20] = {0};
+                                sprintf(texto, "name_size:%d\n", name_size);
+                                uart_write_bytes(UART_NUM_0, texto, strlen(texto));
+                                uart_wait_tx_done(UART_NUM_0, portMAX_DELAY);
+                */
+
                 memcpy(name, param->disc_res.prop[i].val + 2, name_size > 29 ? 29 : name_size);
                 on_new_dev_name_cb(param->disc_res.bda, (void *)name);
-            } 
+            }
             default:
                 break;
             }
